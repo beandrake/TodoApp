@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 
 class Todo():
 	"""
@@ -6,17 +7,22 @@ class Todo():
 	"""
 	def __init__(self):
 		# Makes our database in memory, as opposed to in a file.
-		self.database = sqlite3.connect(":memory:")
+		databaseLocation = ":memory:"
+		
+		# Without PARSE_DECLTYPES, a datetime.date that is inserted will be retrieved as a different datatype.
+		detect_types=sqlite3.PARSE_DECLTYPES
+		
+		self.database = sqlite3.connect(databaseLocation, detect_types=detect_types)
 		self.cursor = self.database.cursor()
 
 		# if our table doesn't already exist, make it
 		self.cursor.execute(r"SELECT name FROM sqlite_schema WHERE type='table' AND name='notes'")
 		listOfTablesNamedNotes = self.cursor.fetchall()
-
 		if len(listOfTablesNamedNotes) == 0:
 			self._createTable()
 	
 	def _createTable(self):
+		# NOTE: sqlite3 doesn't do any checks to verify that the value being inserted into a column is of the appropriate SQL datatype: https://www.sqlite.org/datatype3.html
 		self.cursor.execute(r"""	
 			CREATE TABLE notes(
 				id INTEGER PRIMARY KEY,
@@ -25,13 +31,6 @@ class Todo():
 				text varchar(250) NOT NULL UNIQUE
 			)		
 		""")
-
-	def _flushExceptions(self):
-		"""
-		do i need this to get exceptions?  pyodbc needed something like this, but it seems like sqlite3 may not.  do more tests!
-		"""
-		#return
-		self.cursor.fetchall()
 
 # close database connection
 	def endSession(self):
@@ -60,23 +59,17 @@ class Todo():
 		for note in self.cursor:
 			noteList.append(note)
 		
-		self._flushExceptions()
 		return noteList
 
 # add new note
-	def addNote(self, text, priority, completedOn=None):
+	def addNote(self, text:str, priority:float, completedOn:datetime.date=None):
 		"""
 		Add a new note to the Todo.  Lower values for priority are considered more important.
 		"""
-		if priority < 1:
-			raise ValueError(r"Priority must have a non-negative value.")
-		
 		insertQuery = r"INSERT INTO notes(text, priority, completedOn) VALUES(?, ?, ?)"
 		values = [text, priority, completedOn]
 		self.cursor.execute(insertQuery, values)
 		self.database.commit()
-		
-		self._flushExceptions()
 
 
 # remove note

@@ -3,6 +3,7 @@ from pytest import raises
 from pytest import approx
 from sqlite3 import ProgrammingError, IntegrityError
 from todo import Todo
+from datetime import date
 
 # Note: a new fixture is generated for every test
 @pytest.fixture(autouse=False)
@@ -17,7 +18,7 @@ def test_getNotes_empty(myTodo):
 def test_addNote_single(myTodo):
 	text = r"Clean your room"
 	priority = 3.3
-	completedOn = "2024-03-01"
+	completedOn = date.fromisoformat("2024-03-01")
 	myTodo.addNote(text, priority, completedOn)
 	noteList = myTodo.getNotes()
 	note = noteList[0]
@@ -25,7 +26,7 @@ def test_addNote_single(myTodo):
 
 def test_addNote_multiple(myTodo):	
 	# Note: when retrieved, lower priority will be earlier in list
-	testData0 = ["Get groceries for the week", 12.1, "2023-02-14"]
+	testData0 = ["Get groceries for the week", 12.1, date.fromisoformat('2023-02-14')]
 	testData1 = ["Clean my room", 20, None]
 	testData2 = ["135091241351352460989", 1000]
 	
@@ -49,27 +50,11 @@ def test_addNote_duplicate(myTodo):
 	with raises(IntegrityError):
 		myTodo.addNote(r'SameExactText', 2)
 
-def test_addNote_below_1(myTodo):
-	with raises(ValueError):
-		myTodo.addNote(r'Should fail because value is negative', 0.999)
-
-def test_addNote_negative(myTodo):
-	with raises(ValueError):
-		myTodo.addNote(r'Should fail because value is negative', -5)
-
-def test_addNote_wrongDataTypes(myTodo):
-	with raises(ValueError):
-		myTodo.addNote(r'abc', 'xyz')
-	with raises(ValueError):
-		myTodo.addNote(123, 123)
-	with raises(ValueError):
-		myTodo.addNote(r'Task', 21, 'Steven')
-
 
 def test_clearNotes(myTodo):
 	myTodo.addNote(r"eat cake", 100)
-	myTodo.addNote(r"drink fried chicken", 200, "2018-02-01")
-	myTodo.addNote(r"breathe air", 300, "2025-07-30")
+	myTodo.addNote(r"drink fried chicken", 200, date.fromisoformat("2018-02-01") )
+	myTodo.addNote(r"breathe air", 300, date.fromisoformat("2025-07-30") )
 	myTodo.clearNotes()
 	noteList = myTodo.getNotes()
 
