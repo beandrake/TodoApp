@@ -51,6 +51,40 @@ def test_addNote_duplicate(myTodo):
 		myTodo.addNote(r'SameExactText', 2)
 
 
+def test_updateNote(myTodo):
+	text = r"eat cake"
+	myTodo.addNote(text, 29)
+	firstUpdate = [text, 29]
+	myTodo.updateNote(text, *firstUpdate)
+	# needs more to be a real test
+
+	textNext = r"smash cake"
+
+
+
+
+def test_removeNote(myTodo):
+	text = r"eat cake"
+	myTodo.addNote(text, 1)
+	myTodo.removeNote(text)
+
+	noteList = myTodo.getNotes()
+	found = False
+	for note in noteList:
+		if note[0] == text:
+			found=True
+	assert found == False
+
+
+def test_removeNote_notExist(myTodo):
+	text = r"eat cake"
+	myTodo.removeNote(text, failOnNotFound=False)
+
+	with raises(RuntimeError):
+		myTodo.removeNote(text)
+
+
+
 def test_clearNotes(myTodo):
 	myTodo.addNote(r"eat cake", 100)
 	myTodo.addNote(r"drink fried chicken", 200, date.fromisoformat("2018-02-01") )

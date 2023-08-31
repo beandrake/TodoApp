@@ -73,10 +73,24 @@ class Todo():
 
 
 # remove note
-	
+	def removeNote(self, text:str, failOnNotFound=True):
+		"""
+		Remove an existing note.
+		"""
+		removeQuery = r"DELETE FROM notes WHERE text = ?"
+		values = [text]
+		self.cursor.execute(removeQuery, values)
+		self.database.commit()
+		
+		# check to see if a record was actually deleted
+		if failOnNotFound:
+			if self.cursor.rowcount < 1:
+				raise RuntimeError
+
 
 # update note
-	
+	def updateNote(self, oldText:str, newText:str, priority:float, completedOn:datetime.date=None):
+		pass
 
 # save note
 
