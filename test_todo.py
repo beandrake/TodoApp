@@ -4,12 +4,21 @@ from pytest import approx
 from sqlite3 import ProgrammingError, IntegrityError
 from todo import Todo
 from datetime import date
+import os
+
+TEST_DB_FILE = r'test_savedNotes.db'
 
 # Note: a new fixture is generated for every test
 @pytest.fixture(autouse=False)
 def myTodo():
 	thing = Todo()
-	return thing
+	yield thing
+	# teardown
+	try:
+		os.remove(TEST_DB_FILE)
+	except FileNotFoundError:
+		pass
+	
 
 
 def test_getNotes_empty(myTodo):
@@ -90,8 +99,6 @@ def test_updateNote_notExist(myTodo):
 		myTodo.updateNote(r'Work hard', r'Work even harder', 3, None, failOnNotFound=True)
 
 
-
-
 def test_removeNote(myTodo):
 	text = r"eat cake"
 	myTodo.addNote(text, 1)
@@ -127,3 +134,29 @@ def test_endSession(myTodo):
 	myTodo.endSession()
 	with raises(ProgrammingError):
 		myTodo.addNote(r"This should fail.", 3.3)
+
+
+def test_saveNotes(myTodo):
+	myNote = [r"Write code", 42, date.fromisoformat("2030-01-01")]
+	myTodo.addNote(*myNote)
+	myTodo.save(TEST_DB_FILE)
+
+	myTodo.clearNotes()
+	myTodo.addNote(r"Live laugh love", 31)
+	myTodo.load(TEST_DB_FILE)
+	myTodo.addNote(r"Live laugh love", 31)
+
+	myTodo.load(TEST_DB_FILE)
+	noteList = myTodo.getNotes()
+	
+	assert len(noteList) == 1
+	assert noteList[0] == tuple(myNote)
+
+
+def test_saveNotes_empty(myTodo):
+	myTodo.save(TEST_DB_FILE)
+	myTodo.addNote(r"Live laugh love", 31)
+	myTodo.load(TEST_DB_FILE)
+	noteList = myTodo.getNotes()
+	assert noteList == []
+

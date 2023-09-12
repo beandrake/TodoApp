@@ -5,14 +5,16 @@ class Todo():
 	"""
 	Contains a set of prioritized notes that get saved locally to an sqlite3 database.
 	"""
+
+	# Without PARSE_DECLTYPES, a datetime.date that is inserted into the sqlite database will be retrieved as a different datatype.
+	DETECT_TYPES=sqlite3.PARSE_DECLTYPES
+	
+
 	def __init__(self):
 		# Makes our database in memory, as opposed to in a file.
 		databaseLocation = ":memory:"
 		
-		# Without PARSE_DECLTYPES, a datetime.date that is inserted will be retrieved as a different datatype.
-		detect_types=sqlite3.PARSE_DECLTYPES
-		
-		self.database = sqlite3.connect(databaseLocation, detect_types=detect_types)
+		self.database = sqlite3.connect(databaseLocation, detect_types=Todo.DETECT_TYPES)
 		self.cursor = self.database.cursor()
 
 		# if our table doesn't already exist, make it
@@ -20,7 +22,8 @@ class Todo():
 		listOfTablesNamedNotes = self.cursor.fetchall()
 		if len(listOfTablesNamedNotes) == 0:
 			self._createTable()
-	
+
+
 	def _createTable(self):
 		# NOTE: sqlite3 doesn't do any checks to verify that the value being inserted into a column is of the appropriate SQL datatype: https://www.sqlite.org/datatype3.html
 		self.cursor.execute(r"""	
@@ -31,6 +34,7 @@ class Todo():
 				text varchar(250) NOT NULL UNIQUE
 			)		
 		""")
+
 
 # close database connection
 	def endSession(self):
@@ -89,10 +93,10 @@ class Todo():
 
 
 # update note
-	"""
-	Update an existing note.
-	"""
 	def updateNote(self, oldText:str, newText:str, newPriority:float, newCompletedOn:datetime.date=None, failOnNotFound=True):		
+		"""
+		Update an existing note.
+		"""
 		updateQuery = r"UPDATE notes SET text=?, priority=?, completedOn=? WHERE text=?"
 		values = [newText, newPriority, newCompletedOn, oldText]
 		self.cursor.execute(updateQuery, values)
@@ -105,10 +109,31 @@ class Todo():
 
 
 # save note
+	def save(self, filename):		
+		"""
+		Saves your notes as a file.
+		"""
+		savedDatabase = sqlite3.connect(filename, detect_types=Todo.DETECT_TYPES)
+		
+		# this copies our database from memory into the newly-created database file
+		with savedDatabase: 
+			self.database.backup(savedDatabase, pages=1)
+		savedDatabase.close()
 
 
 # load note
+	def load(self, filename):
+		"""
+		Loads your notes from a file.
+		"""
+		loadedDatabase = sqlite3.connect(filename, detect_types=Todo.DETECT_TYPES)
+		
+		# this copies our database from a file into our in-memory database
+		loadedDatabase.backup(self.database, pages=1)
+		loadedDatabase.close()
 
+		#self.cursor = self.database.cursor()
+		
 
 
 
