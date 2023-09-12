@@ -89,8 +89,20 @@ class Todo():
 
 
 # update note
-	def updateNote(self, oldText:str, newText:str, priority:float, completedOn:datetime.date=None):
-		pass
+	"""
+	Update an existing note.
+	"""
+	def updateNote(self, oldText:str, newText:str, newPriority:float, newCompletedOn:datetime.date=None, failOnNotFound=True):		
+		updateQuery = r"UPDATE notes SET text=?, priority=?, completedOn=? WHERE text=?"
+		values = [newText, newPriority, newCompletedOn, oldText]
+		self.cursor.execute(updateQuery, values)
+		self.database.commit()
+
+		# check to see if a record was actually updated
+		if failOnNotFound:
+			if self.cursor.rowcount < 1:
+				raise RuntimeError
+
 
 # save note
 

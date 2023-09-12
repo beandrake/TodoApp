@@ -11,9 +11,11 @@ def myTodo():
 	thing = Todo()
 	return thing
 
+
 def test_getNotes_empty(myTodo):
 	noteList = myTodo.getNotes()
 	assert noteList == []
+
 
 def test_addNote_single(myTodo):
 	text = r"Clean your room"
@@ -23,6 +25,7 @@ def test_addNote_single(myTodo):
 	noteList = myTodo.getNotes()
 	note = noteList[0]
 	assert note[0] == text and note[1] == approx(priority) and note[2] == completedOn
+
 
 def test_addNote_multiple(myTodo):	
 	# Note: when retrieved, lower priority will be earlier in list
@@ -52,13 +55,39 @@ def test_addNote_duplicate(myTodo):
 
 
 def test_updateNote(myTodo):
-	text = r"eat cake"
-	myTodo.addNote(text, 29)
-	firstUpdate = [text, 29]
-	myTodo.updateNote(text, *firstUpdate)
-	# needs more to be a real test
+	originalText = r"bake cake"
+	myTodo.addNote(originalText, 29)
+	
+	text01 = r"smash cake"
+	firstUpdate = [text01, 36, ]
+	myTodo.updateNote(originalText, *firstUpdate)
+	noteList = myTodo.getNotes()
+	
+	assert len(noteList) == 1
+	
+	firstUpdate.append(None) # add completedOn	
+	assert noteList[0] == tuple(firstUpdate)
 
-	textNext = r"smash cake"
+
+def test_updateNote_duplicate(myTodo):
+	sameText = r'SameExactText'
+	differentText = r'DifferentText'
+	myTodo.addNote(sameText, 1)
+	myTodo.addNote(differentText, 2)
+	with raises(IntegrityError):
+		myTodo.updateNote(differentText, sameText, 3)
+
+
+def test_updateNote_notExist(myTodo):
+	record = [r'Chill', 2301, date.fromisoformat('2025-12-31')]
+	myTodo.addNote(*record)
+	myTodo.updateNote(r'Work hard', r'Work even harder', 3, None, failOnNotFound=False)
+
+	noteList = myTodo.getNotes()
+	assert noteList[0] == tuple(record)
+
+	with raises(RuntimeError):
+		myTodo.updateNote(r'Work hard', r'Work even harder', 3, None, failOnNotFound=True)
 
 
 
@@ -84,7 +113,6 @@ def test_removeNote_notExist(myTodo):
 		myTodo.removeNote(text)
 
 
-
 def test_clearNotes(myTodo):
 	myTodo.addNote(r"eat cake", 100)
 	myTodo.addNote(r"drink fried chicken", 200, date.fromisoformat("2018-02-01") )
@@ -99,4 +127,3 @@ def test_endSession(myTodo):
 	myTodo.endSession()
 	with raises(ProgrammingError):
 		myTodo.addNote(r"This should fail.", 3.3)
-
